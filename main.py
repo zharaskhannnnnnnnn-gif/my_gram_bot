@@ -75,14 +75,33 @@ def start_cmd(message):
     user_data = get_user_data(user_id, username)
     user_data["start_time"] = time.time()
     
-    # Фиксируем, кто пригласил, но бонус ПОКА НЕ НАЧИСЛЯЕМ
     args = message.text.split()
     if len(args) > 1 and args[1].isdigit():
         referrer_id = int(args[1])
         if referrer_id != user_id and user_data["referred_by"] is None:
             user_data["referred_by"] = referrer_id
 
-    send_sponsor_check(message.chat.id)
+    # Проверяем: если пользователь уже прошёл проверку спонсоров и подписан
+    if user_data.get("reward_given") and check_channels_sub(user_id):
+        try:
+            bot.send_photo(
+                message.chat.id,
+                photo=WELCOME_PHOTO,
+                caption="💎 **ДОБРО ПОЖАЛОВАТЬ В ГЛАВНОЕ МЕНЮ!**\n\nПриглашайте друзей и зарабатывайте **Граммы** прямо сейчас!\nИспользуйте меню ниже для навигации 👇",
+                reply_markup=main_keyboard(user_id),
+                parse_mode="Markdown"
+            )
+        except Exception:
+            bot.send_message(
+                message.chat.id,
+                "💎 **ДОБРО ПОЖАЛОВАТЬ В ГЛАВНОЕ МЕНЮ!**\n\nПриглашайте друзей и зарабатывайте **Граммы** прямо сейчас!\nИспользуйте меню ниже для навигации 👇",
+                reply_markup=main_keyboard(user_id),
+                parse_mode="Markdown"
+            )
+    else:
+        # Если не подписан или новый пользователь — просим подписаться
+        send_sponsor_check(message.chat.id)
+        
 
 def send_sponsor_check(chat_id):
     markup = types.InlineKeyboardMarkup()
